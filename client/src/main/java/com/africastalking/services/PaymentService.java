@@ -1,25 +1,27 @@
 package com.africastalking.services;
 
+import com.africastalking.models.payment.B2BResponse;
+import com.africastalking.models.payment.B2CResponse;
+import com.africastalking.models.payment.BankTransferResponse;
+import com.africastalking.models.payment.Business;
+import com.africastalking.models.payment.Consumer;
 import com.africastalking.models.payment.checkout.BankCheckoutRequest;
 import com.africastalking.models.payment.checkout.CardCheckoutRequest;
 import com.africastalking.models.payment.checkout.CheckoutRequest;
+import com.africastalking.models.payment.checkout.CheckoutResponse;
 import com.africastalking.models.payment.checkout.CheckoutValidateRequest;
 import com.africastalking.models.payment.checkout.CheckoutValidationResponse;
 import com.africastalking.models.payment.checkout.MobileCheckoutRequest;
 import com.africastalking.utils.Callback;
-import com.africastalking.models.payment.B2BResponse;
-import com.africastalking.models.payment.B2CResponse;
-import com.africastalking.models.payment.Business;
-import com.africastalking.models.payment.checkout.CheckoutResponse;
-import com.africastalking.models.payment.Consumer;
 import com.google.gson.Gson;
-import retrofit2.Call;
-import retrofit2.Response;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class PaymentService extends Service {
 
@@ -106,6 +108,15 @@ public class PaymentService extends Service {
     }
 
     private HashMap<String, Object> makeB2CRequest(String product, List<Consumer> recipients) {
+        HashMap<String, Object> body = new HashMap<>();
+        body.put("username", username);
+        body.put("productName", product);
+        body.put("recipients", recipients);
+
+        return body;
+    }
+
+    private HashMap<String, Object> makeBankTransferRequest(String product, List<BankCheckoutRequest> recipients) {
         HashMap<String, Object> body = new HashMap<>();
         body.put("username", username);
         body.put("productName", product);
@@ -249,6 +260,19 @@ public class PaymentService extends Service {
     public void mobileB2B(String product, Business recipient, Callback<B2BResponse> callback) {
         HashMap<String, Object> body = makeB2BRequest(product, recipient);
         Call<B2BResponse> call = payment.requestB2B(body);
+        call.enqueue(makeCallback(callback));
+    }
+
+    public BankTransferResponse bankTransfer(String product, List<BankCheckoutRequest> recipients) throws IOException {
+        HashMap<String, Object> body = makeBankTransferRequest(product, recipients);
+        Call<BankTransferResponse> call = payment.bankTransfer(body);
+        Response<BankTransferResponse> res = call.execute();
+        return res.body();
+    }
+
+    public void bankTransfer(String product, List<BankCheckoutRequest> recipients, Callback<BankTransferResponse> callback) {
+        HashMap<String, Object> body = makeBankTransferRequest(product, recipients);
+        Call<BankTransferResponse> call = payment.bankTransfer(body);
         call.enqueue(makeCallback(callback));
     }
 }
